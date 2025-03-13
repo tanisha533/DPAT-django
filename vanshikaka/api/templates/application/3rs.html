@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMetrics - 3R's Integration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #00c853;
+            --secondary-color: #1565c0;
+            --dark-color: #333;
+            --light-color: #f4f4f4;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: var(--gradient);
+            color: white;
+            padding: 6rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover;
+            opacity: 0.1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease 0.2s;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        /* 3R's Cards Section */
+        .rs-section {
+            padding: 5rem 0;
+        }
+
+        .rs-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rs-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .rs-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .rs-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .rs-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .rs-title {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+        }
+
+        .rs-description {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .rs-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Impact Section */
+        .impact-section {
+            background: var(--dark-color);
+            color: white;
+            padding: 5rem 0;
+        }
+
+        .impact-card {
+            text-align: center;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .impact-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .impact-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .impact-label {
+            color: #aaa;
+        }
+
+        /* Call to Action Section */
+        .cta-section {
+            padding: 5rem 0;
+            text-align: center;
+            background: var(--light-color);
+        }
+
+        .cta-title {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark-color);
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: var(--gradient);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark-color);
+            color: white;
+            padding: 4rem 0 2rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-links a {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-links a {
+            color: white;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .rs-stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .impact-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">3R's Integration for Sustainability</h1>
+                <p class="hero-subtitle">Transform waste management and reduce environmental impact through Reduce, Reuse, and Recycle initiatives</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3R's Cards Section -->
+    <section class="rs-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="rs-card">
+                        <i class='bx bx-minus-circle rs-icon'></i>
+                        <h3 class="rs-title">Reduce</h3>
+                        <p class="rs-description">Minimize waste generation and CO₂ emissions through efficient resource management and sustainable practices.</p>
+                        <div class="rs-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">30%</div>
+                                <div class="stat-label">Waste Reduction</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">25%</div>
+                                <div class="stat-label">CO₂ Reduction</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="rs-card">
+                        <i class='bx bx-refresh rs-icon'></i>
+                        <h3 class="rs-title">Reuse</h3>
+                        <p class="rs-description">Extend product lifecycle and reduce environmental impact through innovative reuse strategies.</p>
+                        <div class="rs-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">40%</div>
+                                <div class="stat-label">Resource Reuse</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">35%</div>
+                                <div class="stat-label">Cost Savings</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="rs-card">
+                        <i class='bx bx-recycle rs-icon'></i>
+                        <h3 class="rs-title">Recycle</h3>
+                        <p class="rs-description">Transform waste into valuable resources through advanced recycling technologies and circular economy principles.</p>
+                        <div class="rs-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">60%</div>
+                                <div class="stat-label">Recycling Rate</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">45%</div>
+                                <div class="stat-label">Energy Savings</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Impact Section -->
+    <section class="impact-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="impact-card">
+                        <i class='bx bx-leaf impact-icon'></i>
+                        <div class="impact-value">1.2M</div>
+                        <div class="impact-label">Trees Saved</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="impact-card">
+                        <i class='bx bx-water impact-icon'></i>
+                        <div class="impact-value">2.5M</div>
+                        <div class="impact-label">Gallons of Water Saved</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="impact-card">
+                        <i class='bx bx-cloud impact-icon'></i>
+                        <div class="impact-value">500K</div>
+                        <div class="impact-label">Tons CO₂ Reduced</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="impact-card">
+                        <i class='bx bx-dollar-circle impact-icon'></i>
+                        <div class="impact-value">$2M</div>
+                        <div class="impact-label">Cost Savings</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="cta-title">Ready to Make a Difference?</h2>
+            <p class="mb-4">Join our sustainability initiative and contribute to a greener future.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>About Us</h4>
+                    <p>EcoMetrics is dedicated to promoting sustainable practices through innovative 3R's integration solutions.</p>
+                    <div class="social-links">
+                        <a href="#"><i class='bx bxl-facebook'></i></a>
+                        <a href="#"><i class='bx bxl-twitter'></i></a>
+                        <a href="#"><i class='bx bxl-linkedin'></i></a>
+                        <a href="#"><i class='bx bxl-instagram'></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#">CO₂ Analytics</a></li>
+                        <li><a href="#">E-Waste Management</a></li>
+                        <li><a href="#">3R's Integration</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Us</h4>
+                    <ul class="footer-links">
+                        <li><i class='bx bx-envelope'></i> info@ecometrics.com</li>
+                        <li><i class='bx bx-phone'></i> +1 234 567 890</li>
+                        <li><i class='bx bx-map'></i> 123 Green Street, Eco City</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 EcoMetrics. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add animation to elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px'
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeInUp 0.5s ease forwards';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all sections
+        document.querySelectorAll('.rs-card, .impact-card, .cta-section').forEach(element => {
+            element.style.opacity = '0';
+            observer.observe(element);
+        });
+
+        // Add hover effect to stats
+        const statValues = document.querySelectorAll('.stat-value');
+        statValues.forEach(value => {
+            value.addEventListener('mouseenter', () => {
+                value.style.transform = 'scale(1.1)';
+                value.style.transition = 'transform 0.3s ease';
+            });
+            value.addEventListener('mouseleave', () => {
+                value.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body>
+</html> 

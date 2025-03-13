@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMetrics Dashboard - CO₂ Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #00c853;
+            --secondary-color: #1565c0;
+            --dark-color: #333;
+            --light-color: #f4f4f4;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+
+        .dashboard-body {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background: var(--dark-color);
+            color: white;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            transform: translateX(-250px);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 1rem;
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-container i {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-title {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 1rem;
+            padding-left: 1rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.8rem 1rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--gradient);
+            transform: translateX(5px);
+        }
+
+        .nav-link i {
+            font-size: 1.2rem;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.active + .main-content {
+            margin-left: 0;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .toggle-sidebar {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-sidebar:hover {
+            transform: scale(1.1);
+        }
+
+        /* Dashboard Section Styles */
+        .dashboard-section {
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .section-title {
+            margin-bottom: 1.5rem;
+            color: var(--dark-color);
+            font-size: 1.8rem;
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .kpi-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .kpi-info h3 {
+            font-size: 1rem;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        /* Chart Cards */
+        .chart-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .chart-card h4 {
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .col-md-2 {
+                width: 100%;
+            }
+        }
+
+        /* New styles for slicer container */
+        .slicer-container {
+            background: white;
+            padding: 0.8rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .slicer-title {
+            font-size: 0.9rem;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .slicer-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            flex: 1;
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <i class='bx bx-leaf'></i>
+            <span>EcoMetrics</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <h6 class="nav-title">MAIN MENU</h6>
+                <a href="/api/" class="nav-link">
+                    <i class='bx bx-home'></i>
+                    <span>Home</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <h6 class="nav-title">CO₂ EMISSIONS</h6>
+                <a href="/api/dashboard1/" class="nav-link active">
+                    <i class='bx bx-line-chart'></i>
+                    <span>Visualization</span>
+                </a>
+                <a href="/api/dashboard1/#co2-forecasting" class="nav-link">
+                    <i class='bx bx-trending-up'></i>
+                    <span>Forecasting</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <h6 class="nav-title">E-WASTE</h6>
+                <a href="/api/dashboard2/" class="nav-link">
+                    <i class='bx bx-bar-chart-alt-2'></i>
+                    <span>Visualization</span>
+                </a>
+                <a href="/api/dashboard2/#ewaste-forecasting" class="nav-link">
+                    <i class='bx bx-chip'></i>
+                    <span>Forecasting</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <a href="/api/strategies/" class="nav-link">
+                    <i class='bx bx-bulb'></i>
+                    <span>Strategies</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                    <button class="btn toggle-sidebar">
+                        <i class='bx bx-menu'></i>
+                    </button>
+                    </div>
+                    <div class="col">
+                        <div class="slicer-container mx-auto" style="max-width: 800px;">
+                            <h4 class="slicer-title text-center">Data Filters</h4>
+                            <div class="slicer-group">
+                                <select id="sectorFilter" class="form-select">
+                                    <option value="all">All Sectors</option>
+                                </select>
+                                <select id="energySourceFilter" class="form-select">
+                                    <option value="all">All Energy Sources</option>
+                                </select>
+                                <select id="countryFilter" class="form-select">
+                                    <option value="all">All Countries</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <!-- CO2 KPIs -->
+            <section id="co2-kpis" class="dashboard-section">
+                <div class="container-fluid">
+                    <h2 class="section-title">CO₂ Emissions Overview</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">
+                                    <i class='bx bx-cloud'></i>
+                                </div>
+                                <div class="kpi-info">
+                                    <h3>Total CO₂ Emissions</h3>
+                                    <p class="kpi-value" id="total-emissions">Loading...</p>
+                                    <small class="text-muted">Total emissions across all sectors</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">
+                                    <i class='bx bx-line-chart'></i>
+                                </div>
+                                <div class="kpi-info">
+                                    <h3>Emission Intensity</h3>
+                                    <p class="kpi-value" id="emission-intensity">Loading...</p>
+                                    <small class="text-muted">CO₂ per GDP unit</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">
+                                    <i class='bx bx-recycle'></i>
+                                </div>
+                                <div class="kpi-info">
+                                    <h3>Recycling Efficiency</h3>
+                                    <p class="kpi-value" id="recycling-efficiency">Loading...</p>
+                                    <small class="text-muted">Current recycling rate</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">
+                                    <i class='bx bx-pie-chart-alt'></i>
+                                </div>
+                                <div class="kpi-info">
+                                    <h3>Top Sector Contribution</h3>
+                                    <p class="kpi-value" id="sector-contribution">Loading...</p>
+                                    <small class="text-muted">Highest emitting sector</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">
+                                    <i class='bx bx-target-lock'></i>
+                                </div>
+                                <div class="kpi-info">
+                                    <h3>Reduction Success Rate</h3>
+                                    <p class="kpi-value" id="reduction-success">Loading...</p>
+                                    <small class="text-muted">Target vs. actual reduction</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CO2 Visualization Charts -->
+            <section id="co2-visualization" class="dashboard-section">
+                <div class="container-fluid">
+                    <h2 class="section-title">CO₂ Emissions Analysis</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h4>Sector-wise CO₂ Emissions</h4>
+                                <div class="chart-container">
+                                    <canvas id="methodChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h4>Energy Source Contribution</h4>
+                                <div class="chart-container">
+                                    <canvas id="categoryChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h4>Yearly CO₂ Emissions Trend</h4>
+                                <div class="chart-container">
+                                    <canvas id="trendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h4>Recycling Rate vs. CO₂ Emissions</h4>
+                                <div class="chart-container">
+                                    <canvas id="bubbleChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CO2 Forecasting Charts -->
+            <section id="co2-forecasting" class="dashboard-section">
+                <div class="container-fluid">
+                    <h2 class="section-title">CO₂ Emissions Forecasting</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h4>CO₂ Emissions Forecast (2025-2030)</h4>
+                                <div class="chart-container">
+                                    <canvas id="forecastChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h4>Sector-wise CO₂ Emissions Forecast</h4>
+                                <div class="chart-container">
+                                    <canvas id="regressionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script>
+        // Chart instances
+        let chartInstances = {
+            methodChart: null,
+            categoryChart: null,
+            trendChart: null,
+            bubbleChart: null,
+            forecastChart: null,
+            regressionChart: null
+        };
+
+        // Global data and filters
+        let globalData = null;
+        let selectedFilters = {
+            sector: 'all',
+            energySource: 'all',
+            country: 'all'
+        };
+
+        // Initialize filters
+        function initializeFilters(data) {
+            const sectors = new Set();
+            const energySources = new Set();
+            const countries = new Set();
+
+            data.forEach(item => {
+                if (item.Sector) sectors.add(item.Sector);
+                if (item['Energy Source']) energySources.add(item['Energy Source']);
+                if (item.Country) countries.add(item.Country);
+            });
+
+            // Populate sector filter
+            const sectorFilter = document.getElementById('sectorFilter');
+            sectors.forEach(sector => {
+                const option = document.createElement('option');
+                option.value = sector;
+                option.textContent = sector;
+                sectorFilter.appendChild(option);
+            });
+
+            // Populate energy source filter
+            const energySourceFilter = document.getElementById('energySourceFilter');
+            energySources.forEach(source => {
+                const option = document.createElement('option');
+                option.value = source;
+                option.textContent = source;
+                energySourceFilter.appendChild(option);
+            });
+
+            // Populate country filter
+            const countryFilter = document.getElementById('countryFilter');
+            countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countryFilter.appendChild(option);
+            });
+        }
+
+        // Filter data based on selected filters
+        function filterData(data) {
+            return data.filter(item => {
+                const sectorMatch = selectedFilters.sector === 'all' || item.Sector === selectedFilters.sector;
+                const sourceMatch = selectedFilters.energySource === 'all' || item['Energy Source'] === selectedFilters.energySource;
+                const countryMatch = selectedFilters.country === 'all' || item.Country === selectedFilters.country;
+                return sectorMatch && sourceMatch && countryMatch;
+            });
+        }
+
+        // Update visualizations with filtered data
+        function updateVisualizations(filteredData) {
+            updateKPIs(filteredData);
+            updateCharts(filteredData);
+        }
+
+        // Add event listeners to filters
+        document.getElementById('sectorFilter').addEventListener('change', (e) => {
+            selectedFilters.sector = e.target.value;
+            const filteredData = filterData(globalData);
+            updateVisualizations(filteredData);
+        });
+
+        document.getElementById('energySourceFilter').addEventListener('change', (e) => {
+            selectedFilters.energySource = e.target.value;
+            const filteredData = filterData(globalData);
+            updateVisualizations(filteredData);
+        });
+
+        document.getElementById('countryFilter').addEventListener('change', (e) => {
+            selectedFilters.country = e.target.value;
+            const filteredData = filterData(globalData);
+            updateVisualizations(filteredData);
+        });
+
+        // Load CO2 data
+        async function loadCO2Data() {
+            try {
+                console.log('Fetching CO2 data...');
+                const response = await fetch('/api/co2_data/');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                // Store the data globally
+                globalData = data;
+                
+                // Initialize filters
+                initializeFilters(data);
+                
+                // Initial update with all data
+                updateVisualizations(data);
+                
+            } catch (error) {
+                console.error('Error loading CO2 data:', error);
+                showError();
+            }
+        }
+                
+                // Update KPIs
+        function updateKPIs(filteredData) {
+            try {
+                if (!Array.isArray(filteredData) || filteredData.length === 0) {
+                    throw new Error('Invalid or empty data');
+                }
+
+                // Calculate total emissions with proper error handling
+                const totalEmissions = filteredData.reduce((sum, item) => {
+                    const emissions = item['CO2 Emissions (Metric Tons)'];
+                    if (emissions) {
+                        return sum + parseFloat(emissions.toString().replace(/,/g, '') || 0);
+                    }
+                    return sum;
+                }, 0);
+                
+                // Calculate emission intensity
+                const avgGlobalPct = filteredData.reduce((sum, item) => {
+                    const pct = parseFloat(item['Percentage of Global CO2 Emissions'] || 0);
+                    return sum + (isNaN(pct) ? 0 : pct);
+                }, 0) / filteredData.length;
+                
+                // Calculate recycling rate
+                const avgRecyclingRate = filteredData.reduce((sum, item) => {
+                    const rate = parseFloat(item['Recycling Rate (%)'] || 0);
+                    return sum + (isNaN(rate) ? 0 : rate);
+                }, 0) / filteredData.length;
+                
+                // Update KPI displays
+                document.getElementById('total-emissions').textContent = 
+                    `${totalEmissions.toLocaleString()} MT`;
+                    
+                document.getElementById('emission-intensity').textContent = 
+                    `${(totalEmissions / (avgGlobalPct || 1)).toFixed(2)} MT/USD`;
+                    
+                document.getElementById('recycling-efficiency').textContent = 
+                    `${avgRecyclingRate.toFixed(1)}%`;
+                
+                // Calculate sector contribution with error handling
+                const sectorEmissions = {};
+                filteredData.forEach(item => {
+                    if (item.Sector && item['CO2 Emissions (Metric Tons)']) {
+                        const sector = item.Sector;
+                        const emissions = parseFloat(item['CO2 Emissions (Metric Tons)'].toString().replace(/,/g, '') || 0);
+                        sectorEmissions[sector] = (sectorEmissions[sector] || 0) + emissions;
+                    }
+                });
+                
+                const topSector = Object.entries(sectorEmissions)
+                    .reduce((a, b) => (a[1] > b[1] ? a : b), ['Unknown', 0]);
+                
+                document.getElementById('sector-contribution').textContent = 
+                    `${topSector[0]}: ${((topSector[1] / totalEmissions) * 100).toFixed(1)}%`;
+                
+                // Calculate reduction success
+                const avgReductionTarget = filteredData.reduce((sum, item) => {
+                    const target = parseFloat(item['Emission Reduction Target (%)'] || 0);
+                    return sum + (isNaN(target) ? 0 : target);
+                }, 0) / filteredData.length;
+                    
+                document.getElementById('reduction-success').textContent = 
+                    `${avgReductionTarget.toFixed(1)}%`;
+                
+            } catch (error) {
+                console.error('Error updating KPIs:', error);
+                showError();
+            }
+        }
+
+        // Update charts
+        function updateCharts(filteredData) {
+            try {
+                if (!Array.isArray(filteredData) || filteredData.length === 0) {
+                    throw new Error('Invalid or empty data');
+                }
+
+                // Update Method Chart (Sector-wise emissions)
+                const sectorData = {};
+                filteredData.forEach(item => {
+                    if (item.Sector && item['CO2 Emissions (Metric Tons)']) {
+                        const sector = item.Sector;
+                        const emissions = parseFloat(item['CO2 Emissions (Metric Tons)'].toString().replace(/,/g, '') || 0);
+                        sectorData[sector] = (sectorData[sector] || 0) + emissions;
+                    }
+                });
+                
+                createMethodChart({
+                    labels: Object.keys(sectorData),
+                    data: Object.values(sectorData)
+                });
+                
+                // Update Category Chart (Energy source contribution)
+                const sourceData = {};
+                filteredData.forEach(item => {
+                    if (item['Energy Source'] && item['CO2 Emissions (Metric Tons)']) {
+                        const source = item['Energy Source'];
+                        const emissions = parseFloat(item['CO2 Emissions (Metric Tons)'].toString().replace(/,/g, '') || 0);
+                        sourceData[source] = (sourceData[source] || 0) + emissions;
+                    }
+                });
+                
+                createCategoryChart({
+                    labels: Object.keys(sourceData),
+                    data: Object.values(sourceData)
+                });
+                
+                // Update Trend Chart (Yearly emissions)
+                const yearlyData = {};
+                filteredData.forEach(item => {
+                    if (item.Year && item['CO2 Emissions (Metric Tons)']) {
+                        const year = item.Year;
+                        const emissions = parseFloat(item['CO2 Emissions (Metric Tons)'].toString().replace(/,/g, '') || 0);
+                        yearlyData[year] = (yearlyData[year] || 0) + emissions;
+                    }
+                });
+                
+                const sortedYears = Object.keys(yearlyData).sort();
+                createTrendChart({
+                    labels: sortedYears,
+                    data: sortedYears.map(year => yearlyData[year])
+                });
+                
+                // Update Bubble Chart (Recycling vs Emissions)
+                const bubbleData = {
+                    x: filteredData.map(item => {
+                        const emissions = item['CO2 Emissions (Metric Tons)'];
+                        return emissions ? parseFloat(emissions.toString().replace(/,/g, '') || 0) : 0;
+                    }),
+                    y: filteredData.map(item => parseFloat(item['Recycling Rate (%)'] || 0)),
+                    size: filteredData.map(item => parseFloat(item['Percentage of Global CO2 Emissions'] || 1)),
+                    categories: filteredData.map(item => item.Sector || 'Unknown')
+                };
+                
+                createBubbleChart(bubbleData);
+                
+                // Update forecast charts
+                const sortedYearsForecast = Object.keys(yearlyData).sort();
+                createForecastChart({
+                    labels: sortedYearsForecast,
+                    data: sortedYearsForecast.map(year => yearlyData[year])
+                });
+                
+                // Update regression chart
+                createRegressionChart(filteredData);
+                
+            } catch (error) {
+                console.error('Error updating charts:', error);
+                showError();
+            }
+        }
+
+        // Create Method Chart
+        function createMethodChart(data) {
+            const ctx = document.getElementById('methodChart');
+            if (chartInstances.methodChart) {
+                chartInstances.methodChart.destroy();
+            }
+            
+            chartInstances.methodChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'CO₂ Emissions (Metric Tons)',
+                        data: data.data,
+                        backgroundColor: ['#00c853', '#1565c0', '#ffc107', '#dc3545', '#6f42c1']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Sector-wise CO₂ Emissions' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'CO₂ Emissions (Metric Tons)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create Category Chart
+        function createCategoryChart(data) {
+            const ctx = document.getElementById('categoryChart');
+            if (chartInstances.categoryChart) {
+                chartInstances.categoryChart.destroy();
+            }
+            
+            chartInstances.categoryChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: ['#00c853', '#1565c0', '#ffc107', '#dc3545', '#6f42c1']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'right' },
+                        title: { display: true, text: 'Energy Source Contribution' }
+                    }
+                }
+            });
+        }
+
+        // Create Trend Chart
+        function createTrendChart(data) {
+            const ctx = document.getElementById('trendChart');
+            if (chartInstances.trendChart) {
+                chartInstances.trendChart.destroy();
+            }
+            
+            chartInstances.trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'CO₂ Emissions',
+                        data: data.data,
+                        borderColor: '#00c853',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true },
+                        title: { display: true, text: 'Yearly CO₂ Emissions Trend' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'CO₂ Emissions (Metric Tons)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create Bubble Chart
+        function createBubbleChart(data) {
+            const ctx = document.getElementById('bubbleChart');
+            if (chartInstances.bubbleChart) {
+                chartInstances.bubbleChart.destroy();
+            }
+            
+            const uniqueCategories = [...new Set(data.categories)];
+            const colors = ['#00c853', '#1565c0', '#ffc107', '#dc3545', '#6f42c1'];
+            
+            const datasets = uniqueCategories.map((category, index) => {
+                const categoryIndices = data.categories.map((c, i) => c === category ? i : -1).filter(i => i !== -1);
+                return {
+                    label: category,
+                    data: categoryIndices.map(i => ({
+                        x: data.x[i],
+                        y: data.y[i],
+                        r: Math.sqrt(data.size[i]) * 2
+                    })),
+                    backgroundColor: colors[index % colors.length]
+                };
+            });
+            
+            chartInstances.bubbleChart = new Chart(ctx, {
+                type: 'bubble',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'right' },
+                        title: { display: true, text: 'Recycling Rate vs. CO₂ Emissions' }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'CO₂ Emissions (Metric Tons)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Recycling Rate (%)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update the forecast chart creation
+        function createForecastChart(data) {
+            const ctx = document.getElementById('forecastChart');
+            if (chartInstances.forecastChart) {
+                chartInstances.forecastChart.destroy();
+            }
+            
+            // Calculate forecast values using linear regression
+            const years = data.labels.map(year => parseInt(year));
+            const emissions = data.data;
+            const n = years.length;
+            
+            // Calculate regression coefficients
+            const xMean = years.reduce((a, b) => a + b, 0) / n;
+            const yMean = emissions.reduce((a, b) => a + b, 0) / n;
+            
+            let slope = 0;
+            let intercept = 0;
+            
+            const numerator = years.reduce((acc, year, i) => {
+                return acc + (year - xMean) * (emissions[i] - yMean);
+            }, 0);
+            
+            const denominator = years.reduce((acc, year) => {
+                return acc + Math.pow(year - xMean, 2);
+            }, 0);
+            
+            slope = numerator / denominator;
+            intercept = yMean - slope * xMean;
+            
+            // Generate forecast data
+            const futureYears = Array.from({length: 6}, (_, i) => Math.max(...years) + i + 1);
+            const forecastValues = futureYears.map(year => slope * year + intercept);
+            
+            // Calculate confidence intervals (95%)
+            const confidenceMultiplier = 1.96; // 95% confidence interval
+            const stdDev = Math.sqrt(emissions.reduce((acc, val) => {
+                const predicted = slope * years[emissions.indexOf(val)] + intercept;
+                return acc + Math.pow(val - predicted, 2);
+            }, 0) / (n - 2));
+            
+            const upperBound = forecastValues.map(val => val + confidenceMultiplier * stdDev);
+            const lowerBound = forecastValues.map(val => val - confidenceMultiplier * stdDev);
+            
+            chartInstances.forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [...years, ...futureYears],
+                    datasets: [
+                        {
+                            label: 'Historical Data',
+                            data: [...emissions, ...Array(futureYears.length).fill(null)],
+                            borderColor: '#00c853',
+                            fill: false
+                        },
+                        {
+                            label: 'Forecast',
+                            data: [...Array(years.length).fill(null), ...forecastValues],
+                            borderColor: '#1565c0',
+                            borderDash: [5, 5],
+                            fill: false
+                        },
+                        {
+                            label: 'Upper Bound',
+                            data: [...Array(years.length).fill(null), ...upperBound],
+                            borderColor: 'rgba(21, 101, 192, 0.3)',
+                            fill: '+1',
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Lower Bound',
+                            data: [...Array(years.length).fill(null), ...lowerBound],
+                            borderColor: 'rgba(21, 101, 192, 0.3)',
+                            fill: false,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'CO₂ Emissions Forecast (2025-2030)'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'CO₂ Emissions (Metric Tons)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update the regression chart creation
+        function createRegressionChart(data) {
+            const ctx = document.getElementById('regressionChart');
+            if (chartInstances.regressionChart) {
+                chartInstances.regressionChart.destroy();
+            }
+            
+            // Group data by sector
+            const sectorData = {};
+            data.forEach(item => {
+                if (item.Sector && item['CO2 Emissions (Metric Tons)']) {
+                    const sector = item.Sector;
+                    const year = parseInt(item.Year);
+                    const emissions = parseFloat(item['CO2 Emissions (Metric Tons)'].toString().replace(/,/g, '') || 0);
+                    
+                    if (!sectorData[sector]) {
+                        sectorData[sector] = { years: [], emissions: [] };
+                    }
+                    sectorData[sector].years.push(year);
+                    sectorData[sector].emissions.push(emissions);
+                }
+            });
+            
+            // Generate forecast for each sector
+            const colors = ['#00c853', '#1565c0', '#ffc107', '#dc3545', '#6f42c1'];
+            const datasets = Object.entries(sectorData).map(([sector, data], index) => {
+                const { slope, intercept } = calculateRegression(data.years, data.emissions);
+                const futureYears = Array.from({length: 6}, (_, i) => Math.max(...data.years) + i + 1);
+                const forecastValues = futureYears.map(year => slope * year + intercept);
+                
+                return {
+                    label: sector,
+                    data: [...data.emissions, ...forecastValues],
+                    borderColor: colors[index % colors.length],
+                    backgroundColor: colors[index % colors.length],
+                    fill: false
+                };
+            });
+            
+            chartInstances.regressionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 11}, (_, i) => 2020 + i),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Sector-wise CO₂ Emissions Forecast'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'CO₂ Emissions (Metric Tons)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Helper function to calculate regression coefficients
+        function calculateRegression(x, y) {
+            const n = x.length;
+            const xMean = x.reduce((a, b) => a + b, 0) / n;
+            const yMean = y.reduce((a, b) => a + b, 0) / n;
+            
+            const numerator = x.reduce((acc, xi, i) => {
+                return acc + (xi - xMean) * (y[i] - yMean);
+            }, 0);
+            
+            const denominator = x.reduce((acc, xi) => {
+                return acc + Math.pow(xi - xMean, 2);
+            }, 0);
+            
+            const slope = numerator / denominator;
+            const intercept = yMean - slope * xMean;
+            
+            return { slope, intercept };
+        }
+
+        // Show error message
+        function showError() {
+            const elements = [
+                'total-emissions', 
+                'emission-intensity', 
+                'recycling-efficiency', 
+                'sector-contribution',
+                'reduction-success'
+            ];
+            elements.forEach(id => {
+                document.getElementById(id).textContent = 'Error loading data';
+            });
+            
+            document.querySelectorAll('.chart-container').forEach(container => {
+                container.innerHTML = '<p class="text-danger">Error loading chart data</p>';
+            });
+        }
+
+        // Initialize everything when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCO2Data();
+        });
+    </script>
+</body>
+</html> 

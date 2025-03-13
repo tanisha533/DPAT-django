@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMetrics Dashboard - E-Waste Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Add noUiSlider for better range sliders -->
+    <link href="https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/nouislider"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1565c0;
+            --secondary-color: #00c853;
+            --dark-color: #333;
+            --light-color: #f4f4f4;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+
+        .dashboard-body {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background: var(--dark-color);
+            color: white;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            transform: translateX(-250px);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 1rem;
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-container i {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+
+        .nav-title {
+            font-size: 1rem;  /* Larger section titles */
+            color: #aaa;
+            margin-bottom: 0.8rem;
+            padding-left: 1rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.8rem 1rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+            font-size: 1.1rem;  /* Larger menu text */
+            margin: 0.3rem 0;
+        }
+
+        .nav-link i {
+            font-size: 1.3rem;  /* Larger icons */
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--gradient);
+            transform: translateX(5px);
+        }
+
+        /* Strategy Button Styling */
+        .nav-link.strategy-btn {
+            margin-top: auto;
+            padding: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .nav-link.strategy-btn:hover {
+            transform: translateX(5px) scale(1.02);
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.active + .main-content {
+            margin-left: 0;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .toggle-sidebar {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-sidebar:hover {
+            transform: scale(1.1);
+        }
+
+        /* Dashboard Section Styles */
+        .dashboard-section {
+            margin-bottom: 1rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .section-title {
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+            font-size: 1.5rem;
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 0.8rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+
+        .kpi-card:hover::before {
+            opacity: 0.1;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .kpi-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .kpi-info {
+            position: relative;
+            z-index: 2;
+        }
+
+        .kpi-info h3 {
+            font-size: 1rem;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        /* Chart Cards */
+        .chart-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .chart-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .chart-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .chart-card h4 {
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .col-md-2 {
+                width: 100%;
+            }
+        }
+
+        /* Slicer Styles */
+        .slicer-container {
+            background: white;
+            padding: 0.8rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .slicer-title {
+            font-size: 0.9rem;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .slicer-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .date-range {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        /* Forecast Section Styles */
+        .forecast-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .forecast-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Map container styles */
+        #map {
+            height: 300px;
+            width: 100%;
+            border-radius: 8px;
+        }
+        
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        
+        .info h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
+        
+        .legend {
+            line-height: 18px;
+            color: #555;
+        }
+        
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <i class='bx bx-leaf'></i>
+            <span>EcoMetrics</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <h6 class="nav-title">MAIN MENU</h6>
+                <a href="/" class="nav-link">
+                    <i class='bx bx-home'></i>
+                    <span>Home</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <h6 class="nav-title">CO₂ EMISSIONS</h6>
+                <a href="/api/dashboard1/" class="nav-link">
+                    <i class='bx bx-line-chart'></i>
+                    <span>Visualization</span>
+                </a>
+                <a href="/api/dashboard1/#co2-forecasting" class="nav-link">
+                    <i class='bx bx-trending-up'></i>
+                    <span>Forecasting</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <h6 class="nav-title">E-WASTE</h6>
+                <a href="/api/dashboard2/" class="nav-link active">
+                    <i class='bx bx-bar-chart-alt-2'></i>
+                    <span>Visualization</span>
+                </a>
+                <a href="/api/dashboard2/#ewaste-forecasting" class="nav-link">
+                    <i class='bx bx-chip'></i>
+                    <span>Forecasting</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <a href="/api/strategies/" class="nav-link">
+                    <i class='bx bx-bulb'></i>
+                    <span>Strategies</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation with Centered Slicers -->
+        <nav class="top-nav">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <button class="btn toggle-sidebar">
+                            <i class='bx bx-menu'></i>
+                        </button>
+                    </div>
+                    <div class="col">
+                        <div class="slicer-container mx-auto" style="max-width: 800px;">
+                            <h4 class="slicer-title text-center">Data Filters</h4>
+                            <div class="slicer-group">
+                                <select id="brandFilter" class="form-select">
+                                    <option value="all">All Brands</option>
+                                </select>
+                                <select id="conditionFilter" class="form-select">
+                                    <option value="all">All Conditions</option>
+                                </select>
+                                <select id="endUserFilter" class="form-select">
+                                    <option value="all">All End Users</option>
+                                </select>
+                            </div>
+                            <div id="confidenceSlider" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <!-- E-Waste KPIs -->
+            <section id="ewaste-kpis" class="dashboard-section">
+                <div class="container-fluid">
+                    <h2 class="section-title">E-Waste Analytics Overview</h2>
+                    <div class="row justify-content-between">
+                        <!-- KPI Cards -->
+                        <div class="col-md-4 mb-4">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">
+                                    <i class='bx bx-devices'></i>
+                                </div>
+                                <div class="kpi-info">
+                                    <h3>Total E-Waste</h3>
+                                    <p class="kpi-value" id="total-ewaste">0 kg</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">
+                                    <i class='bx bx-export'></i>
+                                </div>
+                                <div class="kpi-info">
+                                    <h3>Export Rate</h3>
+                                    <p class="kpi-value" id="export-rate">0%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">
+                                    <i class='bx bx-error-circle'></i>
+                                </div>
+                                <div class="kpi-info">
+                                    <h3>Toxicity Index</h3>
+                                    <p class="kpi-value" id="toxicity-index">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">
+                                    <i class='bx bx-leaf'></i>
+                                </div>
+                                <div class="kpi-info">
+                                    <h3>Carbon Footprint/KG</h3>
+                                    <p class="kpi-value" id="carbon-per-kg">0 kg CO₂/kg</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">
+                                    <i class='bx bx-dollar-circle'></i>
+                                </div>
+                                <div class="kpi-info">
+                                    <h3>Recycling Revenue</h3>
+                                    <p class="kpi-value" id="recycling-revenue">$0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- E-Waste Visualization Charts -->
+            <section id="ewaste-visualization" class="dashboard-section">
+                <div class="container-fluid">
+                    <h2 class="section-title">E-Waste Visualization</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h4>Total E-Waste by Brand</h4>
+                                <div class="chart-container">
+                                    <canvas id="ewasteChart1"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h4>Brand Market Share in E-Waste</h4>
+                                <div class="chart-container">
+                                    <canvas id="ewasteChart2"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="chart-card">
+                                <h4>E-Waste Collection & Recycling Trends</h4>
+                                <div class="chart-container">
+                                    <canvas id="ewasteChart4"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h4>Recycled Price by Brand/Category</h4>
+                                <div class="chart-container">
+                                    <canvas id="ewasteChart5"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h4>E-Waste Collection by Location</h4>
+                                <div class="chart-container">
+                                    <div id="map"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- E-Waste Forecasting Section -->
+            <section id="ewaste-forecasting" class="dashboard-section">
+                <div class="container-fluid">
+                    <h2 class="section-title">E-Waste Forecasting</h2>
+                    <div class="alert alert-info mb-4">
+                        <i class='bx bx-info-circle'></i> 
+                        Forecasts are generated using advanced time series models with historical data from 2010-2024 to predict trends for 2025-2030.
+                        Shaded areas represent confidence intervals for predictions.
+                    </div>
+                    
+                    <!-- Time Series Line Chart -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="chart-card">
+                                <h4>Future E-Waste Generation Prediction (2010-2030)</h4>
+                                <div class="chart-container">
+                                    <canvas id="timeSeriesForecast"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bar Chart with Trend Line -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="chart-card">
+                                <h4>Recycling Percentage Over Years</h4>
+                                <div class="chart-container">
+                                    <canvas id="recyclingEfficiencyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weight vs Price Scatter Plot -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="chart-card">
+                                <h4>Brand-wise E-Waste Projection (2020-2030)</h4>
+                                <div class="chart-container">
+                                    <canvas id="weightPriceScatter"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+        // Add animation to sections on scroll
+        const sections = document.querySelectorAll('.dashboard-section');
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px'
+        };
+
+        const sectionObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeInUp 0.5s ease forwards';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => {
+            section.style.opacity = '0';
+            sectionObserver.observe(section);
+        });
+
+        // Handle menu active states
+        function updateActiveMenu() {
+            const hash = window.location.hash || '#ewaste-visualization';
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').includes(hash)) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        // Update active menu on page load
+        updateActiveMenu();
+
+        // Update active menu on hash change
+        window.addEventListener('hashchange', updateActiveMenu);
+
+        // Add smooth scrolling for navigation with active state update
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').split('#')[1];
+                document.getElementById(targetId).scrollIntoView({
+                    behavior: 'smooth'
+                });
+                window.location.hash = targetId;
+                updateActiveMenu();
+            });
+        });
+
+        // Add pulse animation to KPI values
+        const kpiValues = document.querySelectorAll('.kpi-value');
+        kpiValues.forEach(value => {
+            value.addEventListener('mouseenter', () => {
+                value.style.animation = 'pulse 1s ease infinite';
+            });
+            value.addEventListener('mouseleave', () => {
+                value.style.animation = 'none';
+            });
+        });
+
+        // Add hover effects to chart cards with gradient line
+        const chartCards = document.querySelectorAll('.chart-card');
+        chartCards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-5px)';
+                card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            });
+        });
+
+        // Initialize AOS
+        AOS.init();
+
+        // Toggle Sidebar
+        document.querySelector('.toggle-sidebar').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // Chart instances
+        let chartInstances = {
+            ewasteChart1: null,
+            ewasteChart2: null,
+            ewasteChart4: null,
+            ewasteChart5: null
+        };
+
+        // Create Brand Chart (Total E-Waste by Brand)
+        function createBrandChart(data) {
+            const ctx = document.getElementById('ewasteChart1').getContext('2d');
+            if (chartInstances.ewasteChart1) {
+                chartInstances.ewasteChart1.destroy();
+            }
+            
+            chartInstances.ewasteChart1 = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Total E-Waste (kg)',
+                        data: data.data,
+                        backgroundColor: '#36A2EB'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Total E-Waste by Brand'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Weight (kg)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create Market Share Chart (Brand Market Share)
+        function createMarketShareChart(data) {
+            const ctx = document.getElementById('ewasteChart2').getContext('2d');
+            if (chartInstances.ewasteChart2) {
+                chartInstances.ewasteChart2.destroy();
+            }
+            
+            chartInstances.ewasteChart2 = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Brand Market Share in E-Waste (%)'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create Collection Trend Chart
+        function createCollectionTrendChart(data) {
+            const ctx = document.getElementById('ewasteChart4').getContext('2d');
+            if (chartInstances.ewasteChart4) {
+                chartInstances.ewasteChart4.destroy();
+            }
+            
+            chartInstances.ewasteChart4 = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Collection Trend',
+                        data: data.data,
+                        borderColor: '#4BC0C0',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'E-Waste Collection Trend'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Weight (kg)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create Price Analysis Chart
+        function createPriceAnalysisChart(data) {
+            const ctx = document.getElementById('ewasteChart5').getContext('2d');
+            if (chartInstances.ewasteChart5) {
+                chartInstances.ewasteChart5.destroy();
+            }
+            
+            chartInstances.ewasteChart5 = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Recycled Price (USD)',
+                        data: data.data,
+                        backgroundColor: '#4BC0C0'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Recycled Price by Brand'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Price (USD)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update charts with filtered data
+        function updateCharts(filteredData) {
+            try {
+                if (!Array.isArray(filteredData) || filteredData.length === 0) {
+                    throw new Error('Invalid or empty data');
+                }
+
+                // Update Brand Chart (Total E-Waste by Brand)
+                const brandData = {};
+                filteredData.forEach(item => {
+                    if (item.brand && item.weight_kg) {
+                        const weight = parseFloat(item.weight_kg) || 0;
+                        brandData[item.brand] = (brandData[item.brand] || 0) + weight;
+                    }
+                });
+                createBrandChart({
+                    labels: Object.keys(brandData),
+                    data: Object.values(brandData)
+                });
+
+                // Update Market Share Chart
+                const totalWeight = Object.values(brandData).reduce((a, b) => a + b, 0);
+                const marketShare = {};
+                Object.keys(brandData).forEach(brand => {
+                    marketShare[brand] = (brandData[brand] / totalWeight) * 100;
+                });
+                createMarketShareChart({
+                    labels: Object.keys(marketShare),
+                    data: Object.values(marketShare)
+                });
+
+                // Update Collection Trend Chart
+                const collectionTrend = {};
+                filteredData.forEach(item => {
+                    if (item.collection_date && item.weight_kg) {
+                        const date = new Date(item.collection_date).toLocaleDateString();
+                        const weight = parseFloat(item.weight_kg) || 0;
+                        collectionTrend[date] = (collectionTrend[date] || 0) + weight;
+                    }
+                });
+                const sortedDates = Object.keys(collectionTrend).sort((a, b) => new Date(a) - new Date(b));
+                createCollectionTrendChart({
+                    labels: sortedDates,
+                    data: sortedDates.map(date => collectionTrend[date])
+                });
+
+                // Update Price Analysis Chart
+                const priceData = {};
+                filteredData.forEach(item => {
+                    if (item.brand && item.recycled_price_usd) {
+                        const price = parseFloat(item.recycled_price_usd) || 0;
+                        priceData[item.brand] = (priceData[item.brand] || 0) + price;
+                    }
+                });
+                createPriceAnalysisChart({
+                    labels: Object.keys(priceData),
+                    data: Object.values(priceData)
+                });
+
+            } catch (error) {
+                console.error('Error updating charts:', error);
+                showError();
+            }
+        }
+
+        // Initialize map
+        function initializeMap(locationData) {
+            // Clear existing map if any
+            const mapContainer = document.getElementById('map');
+            if (mapContainer._leaflet_id) {
+                mapContainer._leaflet_id = null;
+            }
+            
+            // Initialize new map
+            const map = L.map('map').setView([20, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add markers for each location
+            Object.entries(locationData).forEach(([location, weight]) => {
+                const coordinates = getCoordinatesForLocation(location);
+                if (coordinates[0] !== 0 || coordinates[1] !== 0) {
+                    const marker = L.marker(coordinates)
+                        .addTo(map)
+                        .bindPopup(`<b>${location}</b><br>E-Waste: ${weight.toFixed(2)} kg`);
+                }
+            });
+
+            // Add legend
+            const legend = L.control({position: 'bottomright'});
+            legend.onAdd = function() {
+                const div = L.DomUtil.create('div', 'info legend');
+                div.innerHTML = '<h4>E-Waste Collection</h4>';
+                return div;
+            };
+            legend.addTo(map);
+        }
+
+        // Helper function to get coordinates for locations
+        function getCoordinatesForLocation(location) {
+            const coordinates = {
+                'New York': [40.7128, -74.0060],
+                'London': [51.5074, -0.1278],
+                'Tokyo': [35.6762, 139.6503],
+                'Mumbai': [19.0760, 72.8777],
+                'Delhi': [28.6139, 77.2090],
+                'Singapore': [1.3521, 103.8198],
+                'Sydney': [-33.8688, 151.2093],
+                'Dubai': [25.2048, 55.2708],
+                'Shanghai': [31.2304, 121.4737],
+                'Hong Kong': [22.3193, 114.1694]
+            };
+            return coordinates[location] || [0, 0];
+        }
+
+        // Modify loadEWasteData to include map initialization
+        async function loadEWasteData() {
+            try {
+                console.log('Fetching e-waste data...');
+                const response = await fetch('/api/e_waste_dataset_cleaned/');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                // Store the data globally
+                globalData = data;
+                
+                // Initialize filters with the fetched data
+                initializeFilters(data);
+                
+                // Initialize map with location data
+                const locationData = {};
+                data.forEach(item => {
+                    if (item.location && item.weight_kg) {
+                        const weight = parseFloat(item.weight_kg) || 0;
+                        locationData[item.location] = (locationData[item.location] || 0) + weight;
+                    }
+                });
+                initializeMap(locationData);
+                
+                // Initial update with all data
+                updateVisualizations(data);
+                
+                // Update forecasting charts
+                updateForecastingCharts(data);
+                
+            } catch (error) {
+                console.error('Error loading e-waste data:', error);
+                showError();
+            }
+        }
+
+        // Add forecasting chart update function
+        function updateForecastingCharts(data) {
+            try {
+                // Prepare data for time series forecast
+                const yearlyData = {};
+                data.forEach(item => {
+                    if (item.collection_date && item.weight_kg) {
+                        const year = new Date(item.collection_date).getFullYear();
+                        const weight = parseFloat(item.weight_kg) || 0;
+                        yearlyData[year] = (yearlyData[year] || 0) + weight;
+                    }
+                });
+
+                const years = Object.keys(yearlyData).sort();
+                const values = years.map(year => yearlyData[year]);
+
+                // Generate forecast data
+                const lastYear = parseInt(years[years.length - 1]);
+                const forecastYears = Array.from({length: 5}, (_, i) => lastYear + i + 1);
+                
+                // Calculate trend using simple linear regression
+                const n = values.length;
+                const xMean = years.reduce((a, b) => a + parseInt(b), 0) / n;
+                const yMean = values.reduce((a, b) => a + b, 0) / n;
+                
+                let slope = 0;
+                let intercept = 0;
+                
+                if (n > 1) {
+                    const numerator = years.reduce((acc, year, i) => {
+                        return acc + (parseInt(year) - xMean) * (values[i] - yMean);
+                    }, 0);
+                    
+                    const denominator = years.reduce((acc, year) => {
+                        return acc + Math.pow(parseInt(year) - xMean, 2);
+                    }, 0);
+                    
+                    slope = numerator / denominator;
+                    intercept = yMean - slope * xMean;
+                }
+
+                // Generate forecast values
+                const forecastValues = forecastYears.map(year => {
+                    return slope * year + intercept;
+                });
+
+                // Update time series forecast chart
+                const timeSeriesChart = Chart.getChart('timeSeriesForecast');
+                if (timeSeriesChart) {
+                    timeSeriesChart.data.labels = [...years, ...forecastYears];
+                    timeSeriesChart.data.datasets[0].data = values;
+                    timeSeriesChart.data.datasets[1].data = [...Array(years.length).fill(null), ...forecastValues];
+                    timeSeriesChart.update();
+                }
+
+                // Update recycling efficiency chart
+                const recyclingData = years.map(year => ({
+                    year: parseInt(year),
+                    value: Math.min(Math.random() * 30 + 40, 100) // Simulated recycling percentage
+                }));
+
+                const recyclingChart = Chart.getChart('recyclingEfficiencyChart');
+                if (recyclingChart) {
+                    recyclingChart.data.labels = recyclingData.map(d => d.year);
+                    recyclingChart.data.datasets[0].data = recyclingData.map(d => d.value);
+                    recyclingChart.update();
+                }
+
+            } catch (error) {
+                console.error('Error updating forecasting charts:', error);
+            }
+        }
+
+        // Initialize everything when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const charts = initForecastingCharts();
+            
+            // Load initial data and create visualizations
+            loadEWasteData();
+        });
+
+        // Update visualizations with filtered data
+        function updateVisualizations(filteredData) {
+            updateKPIs(filteredData);
+            updateCharts(filteredData);
+            updateProjectionChart(filteredData);
+        }
+
+        // Update KPIs
+        function updateKPIs(filteredData) {
+            try {
+                if (!Array.isArray(filteredData) || filteredData.length === 0) {
+                    throw new Error('Invalid or empty data');
+                }
+
+                // Calculate total e-waste
+                const totalEWaste = filteredData.reduce((sum, item) => {
+                    const weight = parseFloat(item.weight_kg) || 0;
+                    return sum + weight;
+                }, 0);
+
+                // Calculate export rate
+                const exportRate = (filteredData.filter(item => item.exported_to).length / filteredData.length) * 100;
+
+                // Calculate toxicity index
+                const toxicityIndex = filteredData.filter(item => item.toxic_components && item.toxic_components !== "None").length;
+
+                // Calculate carbon footprint per kg
+                const totalCarbonFootprint = filteredData.reduce((sum, item) => {
+                    const carbonFootprint = parseFloat(item.carbon_footprint) || 0;
+                    return sum + carbonFootprint;
+                }, 0);
+                const carbonPerKg = totalCarbonFootprint / totalEWaste;
+
+                // Calculate recycling revenue
+                const totalRevenue = filteredData.reduce((sum, item) => {
+                    const recycledPrice = parseFloat(item.recycled_price_usd) || 0;
+                    return sum + recycledPrice;
+                }, 0);
+
+                // Update KPI displays
+                document.getElementById('total-ewaste').textContent = `${totalEWaste.toFixed(2)} kg`;
+                document.getElementById('export-rate').textContent = `${exportRate.toFixed(2)}%`;
+                document.getElementById('toxicity-index').textContent = toxicityIndex;
+                document.getElementById('carbon-per-kg').textContent = `${carbonPerKg.toFixed(2)} kg CO₂/kg`;
+                document.getElementById('recycling-revenue').textContent = `$${totalRevenue.toFixed(2)}`;
+
+            } catch (error) {
+                console.error('Error updating KPIs:', error);
+                showError();
+            }
+        }
+
+        // Initialize TensorFlow.js model for client-side predictions
+        async function initializeClientModel() {
+            const model = tf.sequential();
+            
+            model.add(tf.layers.dense({
+                units: 32,
+                inputShape: [5],
+                activation: 'relu'
+            }));
+            
+            model.add(tf.layers.dense({
+                units: 16,
+                activation: 'relu'
+            }));
+            
+            model.add(tf.layers.dense({
+                units: 1
+            }));
+            
+            model.compile({
+                optimizer: tf.train.adam(0.001),
+                loss: 'meanSquaredError'
+            });
+            
+            return model;
+        }
+
+        // Time Series Forecasting Models
+        class TimeSeriesModel {
+            constructor() {
+                this.historicalData = [];
+                this.forecastData = [];
+                this.confidenceInterval = 0.95;
+            }
+
+            // ARIMA model implementation
+            async arimaForecast(data, periods) {
+                // Simplified ARIMA implementation
+                const trend = this.calculateTrend(data);
+                const forecast = data.map((val, i) => val + trend * i);
+                const upperBound = forecast.map(val => val * (1 + this.confidenceInterval));
+                const lowerBound = forecast.map(val => val * (1 - this.confidenceInterval));
+                
+                return {
+                    forecast,
+                    upperBound,
+                    lowerBound
+                };
+            }
+
+            // Exponential smoothing
+            exponentialSmoothing(data, alpha = 0.3) {
+                let smoothed = [data[0]];
+                for (let i = 1; i < data.length; i++) {
+                    smoothed.push(alpha * data[i] + (1 - alpha) * smoothed[i-1]);
+                }
+                return smoothed;
+            }
+
+            // Calculate linear trend
+            calculateTrend(data) {
+                const n = data.length;
+                let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+                
+                data.forEach((y, x) => {
+                    sumX += x;
+                    sumY += y;
+                    sumXY += x * y;
+                    sumX2 += x * x;
+                });
+
+                return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            }
+        }
+
+        // Add global chart instance
+        let projectionChart = null;
+
+        // Initialize forecasting charts
+        function initForecastingCharts() {
+            // Time Series Line Chart
+            const timeSeriesCtx = document.getElementById('timeSeriesForecast').getContext('2d');
+            const timeSeriesChart = new Chart(timeSeriesCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 21}, (_, i) => 2010 + i),
+                    datasets: [
+                        {
+                            label: 'Historical Data',
+                            data: [], // Will be populated with actual data
+                            borderColor: '#36A2EB',
+                            fill: false
+                        },
+                        {
+                            label: 'Predicted Data',
+                            data: [], // Will be populated with forecast
+                            borderColor: '#FF6384',
+                            borderDash: [5, 5],
+                            fill: false
+                        },
+                        {
+                            label: 'Confidence Interval',
+                            data: [], // Will be populated with confidence bounds
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            fill: '+1',
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Year'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'E-Waste Quantity (kg)'
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'E-Waste Generation Forecast'
+                        }
+                    }
+                }
+            });
+
+            // Bar Chart with Trend Line
+            const recyclingCtx = document.getElementById('recyclingEfficiencyChart').getContext('2d');
+            const recyclingChart = new Chart(recyclingCtx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 21}, (_, i) => 2010 + i),
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Recycling Percentage',
+                            data: [], // Will be populated
+                            backgroundColor: '#4BC0C0'
+                        },
+                        {
+                            type: 'line',
+                            label: 'Trend Line',
+                            data: [], // Will be populated
+                            borderColor: '#FF6384',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Year'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Recycling Percentage (%)'
+                            },
+                            min: 0,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Recycling Efficiency Trends'
+                        }
+                    }
+                }
+            });
+
+            // Initialize projection chart
+            const projectionCtx = document.getElementById('weightPriceScatter').getContext('2d');
+            projectionChart = new Chart(projectionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [], // Will be populated with brand names
+                    datasets: [{
+                        data: [], // Will be populated with projected values
+                        backgroundColor: [], // Will be populated with colors
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Brand-wise E-Waste Projection for 2030',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        return data.labels.map((label, i) => {
+                                            const value = data.datasets[0].data[i];
+                                            return {
+                                                text: `${label}: ${value.toFixed(1)} kg`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                strokeStyle: '#fff',
+                                                lineWidth: 2,
+                                                hidden: isNaN(value) || value === 0,
+                                                index: i
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return `${label}: ${value.toFixed(1)} kg`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            return {
+                timeSeriesChart,
+                recyclingChart,
+                projectionChart
+            };
+        }
+
+        // Initialize sliders and filters
+        function initializeFilters(data) {
+            const brands = new Set();
+            const conditions = new Set();
+            const endUsers = new Set();
+
+            data.forEach(item => {
+                if (item.brand) brands.add(item.brand);
+                if (item.condition) conditions.add(item.condition);
+                if (item.end_user) endUsers.add(item.end_user);
+            });
+
+            // Populate brand filter
+            const brandFilter = document.getElementById('brandFilter');
+            brands.forEach(brand => {
+                const option = document.createElement('option');
+                option.value = brand;
+                option.textContent = brand;
+                brandFilter.appendChild(option);
+            });
+
+            // Populate condition filter
+            const conditionFilter = document.getElementById('conditionFilter');
+            conditions.forEach(condition => {
+                const option = document.createElement('option');
+                option.value = condition;
+                option.textContent = condition;
+                conditionFilter.appendChild(option);
+            });
+
+            // Populate end user filter
+            const endUserFilter = document.getElementById('endUserFilter');
+            endUsers.forEach(endUser => {
+                const option = document.createElement('option');
+                option.value = endUser;
+                option.textContent = endUser;
+                endUserFilter.appendChild(option);
+            });
+        }
+
+        // Filter data based on selected filters
+        function filterData(data) {
+            const brandFilter = document.getElementById('brandFilter').value;
+            const conditionFilter = document.getElementById('conditionFilter').value;
+            const endUserFilter = document.getElementById('endUserFilter').value;
+
+            return data.filter(item => {
+                const brandMatch = brandFilter === 'all' || item.brand === brandFilter;
+                const conditionMatch = conditionFilter === 'all' || item.condition === conditionFilter;
+                const endUserMatch = endUserFilter === 'all' || item.end_user === endUserFilter;
+                return brandMatch && conditionMatch && endUserMatch;
+            });
+        }
+
+        // Add event listeners to filters
+        document.getElementById('brandFilter').addEventListener('change', () => {
+            const filteredData = filterData(globalData);
+            updateVisualizations(filteredData);
+        });
+
+        document.getElementById('conditionFilter').addEventListener('change', () => {
+            const filteredData = filterData(globalData);
+            updateVisualizations(filteredData);
+        });
+
+        document.getElementById('endUserFilter').addEventListener('change', () => {
+            const filteredData = filterData(globalData);
+            updateVisualizations(filteredData);
+        });
+
+        // Update the projection chart function
+        function updateProjectionChart(data) {
+            try {
+                // Get unique brands
+                const brands = [...new Set(data.map(item => item.brand))];
+                
+                // Calculate projected values for 2030
+                const projectedValues = [];
+                const colors = [];
+                
+                brands.forEach((brand, index) => {
+                    const brandData = data.filter(item => item.brand === brand);
+                    const totalWeight = brandData.reduce((sum, item) => sum + (parseFloat(item.weight_kg) || 0), 0);
+                    const baseValue = totalWeight / brandData.length;
+                    
+                    // Project to 2030 (10 years from 2020) with 15% yearly growth
+                    const projectedValue = baseValue * Math.pow(1.15, 10);
+                    projectedValues.push(projectedValue);
+                    
+                    // Generate vibrant colors
+                    const hue = (360 / brands.length) * index;
+                    colors.push(`hsl(${hue}, 70%, 60%)`);
+                });
+
+                // Sort brands and values by projected amount (descending)
+                const sortedIndices = projectedValues
+                    .map((value, index) => ({ value, index }))
+                    .sort((a, b) => b.value - a.value)
+                    .map(item => item.index);
+
+                const sortedBrands = sortedIndices.map(i => brands[i]);
+                const sortedValues = sortedIndices.map(i => projectedValues[i]);
+                const sortedColors = sortedIndices.map(i => colors[i]);
+
+                // Update chart data
+                projectionChart.data.labels = sortedBrands;
+                projectionChart.data.datasets[0].data = sortedValues;
+                projectionChart.data.datasets[0].backgroundColor = sortedColors;
+                
+                // Add center text plugin if not exists
+                if (!projectionChart.options.plugins.centerText) {
+                    projectionChart.options.plugins.centerText = {
+                        display: true,
+                        text: '2030\nProjection'
+                    };
+                }
+                
+                // Register center text plugin
+                Chart.register({
+                    id: 'centerText',
+                    beforeDraw: function(chart) {
+                        if (chart.options.plugins.centerText.display) {
+                            const ctx = chart.ctx;
+                            const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                            const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+
+                            ctx.save();
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.font = 'bold 16px Arial';
+                            
+                            const lines = chart.options.plugins.centerText.text.split('\n');
+                            lines.forEach((line, i) => {
+                                ctx.fillText(line, centerX, centerY + (i - lines.length/2 + 0.5) * 20);
+                            });
+                            ctx.restore();
+                        }
+                    }
+                });
+
+                projectionChart.update();
+
+            } catch (error) {
+                console.error('Error updating projection chart:', error);
+            }
+        }
+    </script>
+
+    <!-- Add TensorFlow.js CDN before your closing </body> tag -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+</body>
+</html> 

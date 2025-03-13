@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMetrics - Sustainability Strategies</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+    <style>
+        :root {
+            --primary-color: #00c853;
+            --secondary-color: #1565c0;
+            --dark-color: #333;
+            --light-color: #f4f4f4;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+
+        .dashboard-body {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background: var(--dark-color);
+            color: white;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            transform: translateX(-250px);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 1rem;
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-container i {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-title {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 0.5rem;
+            padding-left: 1rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.8rem 1rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--gradient);
+            transform: translateX(5px);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+        }
+
+        /* Strategy Cards */
+        .strategy-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .strategy-card.collapsed .strategy-content {
+            display: none;
+        }
+
+        .strategy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .strategy-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin: 0;
+        }
+
+        .strategy-impact {
+            color: var(--success-color);
+            font-weight: 500;
+        }
+
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark-color);
+        }
+
+        .datatable {
+            width: 100% !important;
+        }
+
+        /* Tooltips */
+        .tooltip-trigger {
+            cursor: help;
+            color: var(--primary-color);
+            margin-left: 0.5rem;
+        }
+
+        /* Export Buttons */
+        .export-buttons {
+            margin-bottom: 1rem;
+        }
+
+        .export-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            background: var(--gradient);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Search Box */
+        .dataTables_filter input {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 0.5rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <i class='bx bx-leaf'></i>
+            <span>EcoMetrics</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <h6 class="nav-title">MAIN MENU</h6>
+                <a href="/" class="nav-link">
+                    <i class='bx bx-home'></i>
+                    <span>Home</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <h6 class="nav-title">CO₂ EMISSIONS</h6>
+                <a href="/api/dashboard1/" class="nav-link">
+                    <i class='bx bx-line-chart'></i>
+                    <span>Visualization</span>
+                </a>
+                <a href="/api/dashboard1/#co2-forecasting" class="nav-link">
+                    <i class='bx bx-trending-up'></i>
+                    <span>Forecasting</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <h6 class="nav-title">E-WASTE</h6>
+                <a href="/api/dashboard2/" class="nav-link">
+                    <i class='bx bx-bar-chart-alt-2'></i>
+                    <span>Visualization</span>
+                </a>
+                <a href="/api/dashboard2/#ewaste-forecasting" class="nav-link">
+                    <i class='bx bx-chip'></i>
+                    <span>Forecasting</span>
+                </a>
+            </div>
+            <div class="nav-section">
+                <a href="/api/strategies/" class="nav-link active">
+                    <i class='bx bx-bulb'></i>
+                    <span>Strategies</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 class="mb-4">Sustainability Strategies</h1>
+
+        <!-- Top 5 Strategies Section -->
+        <div class="mb-5">
+            <h2 class="mb-4">Top 5 Reduction Strategies</h2>
+            <div class="row">
+                {% for strategy in top_strategies %}
+                <div class="col-12">
+                    <div class="strategy-card collapsed">
+                        <div class="strategy-header">
+                            <h3 class="strategy-title">
+                                <i class='bx bx-bulb'></i>
+                                {{ strategy.title }}
+                            </h3>
+                            <span class="strategy-impact">{{ strategy.impact }}</span>
+                        </div>
+                        <div class="strategy-content">
+                            <p>{{ strategy.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- CO2 Emissions Table -->
+        <div class="table-container">
+            <h2 class="table-title">CO₂ Emissions Analysis</h2>
+            <div class="export-buttons">
+                <button class="export-btn" onclick="exportTableToCSV('co2-table', 'co2_emissions_data.csv')">
+                    <i class='bx bx-download'></i> Export CSV
+                </button>
+                <button class="export-btn" onclick="exportTableToPDF('co2-table', 'CO2 Emissions Analysis')">
+                    <i class='bx bx-file'></i> Export PDF
+                </button>
+            </div>
+            <table id="co2-table" class="table datatable">
+                <thead>
+                    <tr>
+                        <th>Sector</th>
+                        <th>Company Name</th>
+                        <th>CO₂ Emissions (MT)</th>
+                        <th>Reduction Target (%)</th>
+                        <th>Recycling Rate (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for strategy in co2_strategies %}
+                    <tr>
+                        <td>{{ strategy.Sector }}</td>
+                        <td>{{ strategy.Company Name }}</td>
+                        <td>{{ strategy.CO2 Emissions (Metric Tons)|floatformat:2 }}</td>
+                        <td>{{ strategy.Emission Reduction Target (%)|floatformat:1 }}</td>
+                        <td>{{ strategy.Recycling Rate (%)|floatformat:1 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- E-Waste Table -->
+        <div class="table-container">
+            <h2 class="table-title">E-Waste Management Analysis</h2>
+            <div class="export-buttons">
+                <button class="export-btn" onclick="exportTableToCSV('ewaste-table', 'ewaste_data.csv')">
+                    <i class='bx bx-download'></i> Export CSV
+                </button>
+                <button class="export-btn" onclick="exportTableToPDF('ewaste-table', 'E-Waste Management Analysis')">
+                    <i class='bx bx-file'></i> Export PDF
+                </button>
+            </div>
+            <table id="ewaste-table" class="table datatable">
+                <thead>
+                    <tr>
+                        <th>Brand</th>
+                        <th>Product Type</th>
+                        <th>Total Waste (kg)</th>
+                        <th>Avg. Recycling Price (USD)</th>
+                        <th>Carbon Footprint</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for strategy in ewaste_strategies %}
+                    <tr>
+                        <td>{{ strategy.brand }}</td>
+                        <td>{{ strategy.product_type }}</td>
+                        <td>{{ strategy.total_waste|floatformat:2 }}</td>
+                        <td>${{ strategy.recycled_price_usd|floatformat:2 }}</td>
+                        <td>{{ strategy.carbon_footprint|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        // Initialize DataTables
+        $(document).ready(function() {
+            $('.datatable').DataTable({
+                pageLength: 10,
+                responsive: true,
+                dom: '<"top"f>rt<"bottom"lip><"clear">'
+            });
+
+            // Strategy card click handler
+            $('.strategy-card').click(function() {
+                $(this).toggleClass('collapsed');
+                $(this).find('.strategy-content').slideToggle();
+            });
+        });
+
+        // Export table to CSV
+        function exportTableToCSV(tableId, filename) {
+            const table = document.getElementById(tableId);
+            const rows = table.querySelectorAll('tr');
+            const csv = [];
+            
+            for (const row of rows) {
+                const cells = row.querySelectorAll('td, th');
+                const rowData = Array.from(cells).map(cell => {
+                    let text = cell.textContent;
+                    // Remove commas and wrap in quotes if contains special characters
+                    text = text.replace(/,/g, '');
+                    if (text.includes(' ') || text.includes('"')) {
+                        text = `"${text.replace(/"/g, '""')}"`;
+                    }
+                    return text;
+                });
+                csv.push(rowData.join(','));
+            }
+            
+            const csvContent = csv.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Export table to PDF
+        function exportTableToPDF(tableId, title) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.text(title, 14, 15);
+            
+            doc.autoTable({
+                html: `#${tableId}`,
+                startY: 25,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [0, 200, 83],
+                    textColor: [255, 255, 255]
+                },
+                styles: {
+                    fontSize: 8
+                }
+            });
+            
+            doc.save(`${title.toLowerCase().replace(/ /g, '_')}.pdf`);
+        }
+
+        // Initialize tooltips
+        const tooltips = {
+            'co2-emissions': 'Total carbon dioxide emissions measured in metric tons (MT)',
+            'reduction-target': 'Percentage reduction in emissions targeted by the company',
+            'recycling-rate': 'Percentage of materials currently being recycled',
+            'total-waste': 'Total e-waste generated in kilograms',
+            'recycling-price': 'Average price received for recycled materials',
+            'carbon-footprint': 'Environmental impact measured in CO2 equivalent'
+        };
+
+        // Add tooltip triggers to table headers
+        document.addEventListener('DOMContentLoaded', function() {
+            const headers = document.querySelectorAll('th');
+            headers.forEach(header => {
+                const text = header.textContent.toLowerCase();
+                Object.entries(tooltips).forEach(([key, value]) => {
+                    if (text.includes(key.replace('-', ' '))) {
+                        const icon = document.createElement('i');
+                        icon.className = 'bx bx-info-circle tooltip-trigger';
+                        icon.setAttribute('data-bs-toggle', 'tooltip');
+                        icon.setAttribute('data-bs-placement', 'top');
+                        icon.setAttribute('title', value);
+                        header.appendChild(icon);
+                    }
+                });
+            });
+
+            // Initialize Bootstrap tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+</body>
+</html> 
