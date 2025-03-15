@@ -6,6 +6,9 @@ whitenoise==6.4.0
 
 pymupdf
 google-generativeai
+faiss-cpu==1.7.4
+sentence-transformers==2.2.2
+requests==2.31.0 
 
 # Database
 psycopg2==2.9.6
